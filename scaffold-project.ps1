@@ -85,31 +85,36 @@ if (Test-Path "frontend") {
 }
 
 # ---------------------------------------------------------------------------
-# 3. .gitignore - generar el oficial de dotnet y combinarlo con el actual
-#    (el de Vite ya quedo copiado dentro de frontend/.gitignore por create-vite)
+# 3. .gitignore - el .gitignore de la raiz ya cubre a mano los patrones
+#    estandar de .NET SDK-style y de Vite/React. Este paso solo consolida
+#    frontend/.gitignore (generado por create-vite) adentro del de la raiz,
+#    agregando unicamente las lineas que todavia no esten, para terminar con
+#    un solo .gitignore en el repo.
+#    (Se dejo de usar 'dotnet new gitignore' aca: no es consistente entre
+#    versiones del SDK -- ver el mismo problema que con .slnx/.sln arriba.)
 # ---------------------------------------------------------------------------
-Write-Host "`n== Regenerando .gitignore ==" -ForegroundColor Cyan
-
-$dotnetGitignoreDir = Join-Path $PSScriptRoot ".dotnet-gitignore-tmp"
-New-Item -ItemType Directory -Path $dotnetGitignoreDir -Force | Out-Null
-
-dotnet new gitignore -o $dotnetGitignoreDir --force
-if ($LASTEXITCODE -ne 0) { Write-Error "Fallo 'dotnet new gitignore'."; exit 1 }
-
-$dotnetGitignoreContent = Get-Content (Join-Path $dotnetGitignoreDir ".gitignore") -Raw
-Remove-Item $dotnetGitignoreDir -Recurse -Force
+Write-Host "`n== Consolidando .gitignore ==" -ForegroundColor Cyan
 
 $rootGitignore = Join-Path $PSScriptRoot ".gitignore"
-Add-Content -Path $rootGitignore -Value "`n## --- .NET (generado por 'dotnet new gitignore', Fase 1) ---`n"
-Add-Content -Path $rootGitignore -Value $dotnetGitignoreContent
-
 $frontendGitignore = Join-Path $PSScriptRoot "frontend\.gitignore"
+
 if (Test-Path $frontendGitignore) {
-    $viteGitignoreContent = Get-Content $frontendGitignore -Raw
-    Add-Content -Path $rootGitignore -Value "`n## --- Node / Vite (generado por create-vite, Fase 1) ---`n"
-    Add-Content -Path $rootGitignore -Value $viteGitignoreContent
+    $rootLines = Get-Content $rootGitignore
+    $newLines = Get-Content $frontendGitignore | Where-Object {
+        $line = $_.Trim()
+        ($line -ne "") -and (-not $line.StartsWith("#")) -and ($rootLines -notcontains $_)
+    }
+    if ($newLines) {
+        Add-Content -Path $rootGitignore -Value "`n## --- agregado desde frontend/.gitignore (create-vite) ---"
+        Add-Content -Path $rootGitignore -Value $newLines
+        Write-Host ("Se agregaron {0} linea(s) nuevas desde frontend/.gitignore." -f $newLines.Count) -ForegroundColor Yellow
+    } else {
+        Write-Host "frontend/.gitignore no tenia lineas nuevas para agregar." -ForegroundColor Yellow
+    }
     Remove-Item $frontendGitignore
-    Write-Host "Se consolido frontend/.gitignore dentro del .gitignore raiz." -ForegroundColor Yellow
+    Write-Host "frontend/.gitignore eliminado (consolidado en el .gitignore de la raiz)." -ForegroundColor Yellow
+} else {
+    Write-Host "No hay frontend/.gitignore para consolidar." -ForegroundColor Yellow
 }
 
 Write-Host "`n== Listo ==" -ForegroundColor Green
