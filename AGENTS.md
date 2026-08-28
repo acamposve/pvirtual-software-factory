@@ -73,7 +73,7 @@ spec aprobada → branch → implementación → tests → PR → CI verde → r
 # Backend (.NET) - solución PVirtualSoftwareFactory.slnx en la raíz
 dotnet build
 dotnet test        # no hay tests todavía (Fase 3/4)
-dotnet run --project backend/Api.csproj
+dotnet run --project backend/Api/Api.csproj
 
 # Frontend (React + Vite + TS)
 cd frontend

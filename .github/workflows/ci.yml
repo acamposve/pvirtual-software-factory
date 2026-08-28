@@ -24,12 +24,10 @@ jobs:
       - name: Build
         run: dotnet build PVirtualSoftwareFactory.slnx --no-restore --configuration Release
 
-      # Todavia no hay proyectos de test (Fase 4 los agrega). Se deja el paso
-      # listo y no bloqueante hasta que exista el primero, para no romper CI
-      # con un comando que hoy no tiene nada que correr.
+      # Api.Tests (specs/health-check/) es el primer proyecto de test real
+      # del repo -> este paso ya es bloqueante (Article IV/V de la Constitution).
       - name: Test
         run: dotnet test PVirtualSoftwareFactory.slnx --no-build --configuration Release
-        continue-on-error: true
 
       # Informativo por ahora (Article III) - se vuelve bloqueante mas adelante
       # si el equipo lo decide, una vez que haya paquetes reales en uso.
