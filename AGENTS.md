@@ -69,6 +69,20 @@ spec aprobada → branch → implementación → tests → PR → CI verde → r
 
 ## Comandos de build/test
 
-_Pendiente: se completa cuando se agregue el primer código real (Fase 3/4).
-Cada spec que lo requiera debe documentar aquí sus comandos específicos si
-difieren del stack por defecto._
+```bash
+# Backend (.NET) - solución PVirtualSoftwareFactory.slnx en la raíz
+dotnet build
+dotnet test        # no hay tests todavía (Fase 3/4)
+dotnet run --project backend/Api.csproj
+
+# Frontend (React + Vite + TS)
+cd frontend
+npm install         # primera vez / tras cambios en package.json
+npm run dev
+npm run build
+npm run lint
+```
+
+Cada spec que lo requiera puede documentar comandos adicionales o distintos
+en su propia carpeta (`specs/<feature>/tasks.md`) si difieren del stack por
+defecto.
