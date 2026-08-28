@@ -14,6 +14,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// GET /health - liveness check. Ver specs/health-check/ (spec aprobada).
+// Publico (sin auth), sin dependencias externas (no toca DB ni servicios).
+app.MapGet("/health", () => new HealthResponse("healthy", DateTime.UtcNow))
+    .WithName("GetHealth");
+
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
@@ -39,3 +44,10 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
+record HealthResponse(string Status, DateTime TimestampUtc);
+
+// Necesario para que WebApplicationFactory<Program> (en Api.Tests) pueda
+// referenciar este Program implicito (top-level statements genera una
+// clase Program internal por default).
+public partial class Program { }
