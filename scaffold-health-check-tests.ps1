@@ -90,7 +90,7 @@ if ($LASTEXITCODE -ne 0) { Write-Error "Fallo agregar Api.Tests a la solucion.";
 Write-Host "`n== Limpiando obj/bin para evitar restore en cache viejo ==" -ForegroundColor Cyan
 
 Get-ChildItem -Path $PSScriptRoot -Recurse -Directory -Include "obj", "bin" -ErrorAction SilentlyContinue |
-    Where-Object { $_.FullName -notmatch "\node_modules\" } |
+    Where-Object { $_.FullName -notmatch "node_modules" } |
     Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host "`n== Restore (forzado) ==" -ForegroundColor Cyan
