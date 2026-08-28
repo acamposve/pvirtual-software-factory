@@ -81,17 +81,31 @@ dotnet sln $slnFile.FullName add $testCsproj
 if ($LASTEXITCODE -ne 0) { Write-Error "Fallo agregar Api.Tests a la solucion."; exit 1 }
 
 # ---------------------------------------------------------------------------
-# 4. Restore + build + test (misma secuencia que corre CI)
+# 4. Restore (forzado, sin cache) + build + test
+#    No usamos --no-restore en el build: si el restore anterior quedo
+#    desactualizado (paso tipico al agregar un proyecto/paquete nuevo),
+#    --no-restore compila contra ese estado viejo y tira "no se encontro
+#    Xunit / WebApplicationFactory" aunque el .csproj este bien.
 # ---------------------------------------------------------------------------
-Write-Host "`n== Restore + Build + Test ==" -ForegroundColor Cyan
+Write-Host "`n== Limpiando obj/bin para evitar restore en cache viejo ==" -ForegroundColor Cyan
 
-dotnet restore $slnFile.FullName
+Get-ChildItem -Path $PSScriptRoot -Recurse -Directory -Include "obj", "bin" -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -notmatch "\node_modules\" } |
+    Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+
+Write-Host "`n== Restore (forzado) ==" -ForegroundColor Cyan
+
+dotnet restore $slnFile.FullName --force --no-cache
 if ($LASTEXITCODE -ne 0) { Write-Error "Fallo 'dotnet restore'."; exit 1 }
 
-dotnet build $slnFile.FullName --no-restore --configuration Release
+Write-Host "`n== Build ==" -ForegroundColor Cyan
+
+dotnet build $slnFile.FullName --configuration Release
 if ($LASTEXITCODE -ne 0) { Write-Error "Fallo 'dotnet build'."; exit 1 }
 
-dotnet test $slnFile.FullName --no-build --configuration Release
+Write-Host "`n== Test ==" -ForegroundColor Cyan
+
+dotnet test $slnFile.FullName --configuration Release
 if ($LASTEXITCODE -ne 0) { Write-Error "Los tests fallaron. Revisa el output de arriba."; exit 1 }
 
 Write-Host "`n== Listo: build y tests en verde ==" -ForegroundColor Green
