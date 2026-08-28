@@ -1,0 +1,31 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## Node / React
+node_modules/
+dist/
+build/
+.next/
+coverage/
+*.local
+
+## Secrets / environment (never commit real secrets — see docs/CONSTITUTION.md, Article III)
+.env
+.env.*
+!.env.example
+appsettings.*.json
+!appsettings.json
+!appsettings.*.example.json
+secrets.json
+*.pfx
+*.key
+
+## OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
