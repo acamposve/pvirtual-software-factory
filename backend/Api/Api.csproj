@@ -4,6 +4,11 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Version>0.1.0</Version>
+    <!-- Sin esto, el SDK le agrega "+<git-sha>" a AssemblyInformationalVersionAttribute
+         al buildear dentro de un repo git, y GET /version dejaria de matchear <Version>
+         tal cual pide specs/version-endpoint/acceptance.md. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
   <ItemGroup>
