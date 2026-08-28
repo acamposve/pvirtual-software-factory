@@ -59,7 +59,7 @@ if (Test-Path $testCsproj) {
 # ---------------------------------------------------------------------------
 Write-Host "`n== Agregando referencias ==" -ForegroundColor Cyan
 
-dotnet add $testCsproj reference backend/Api.csproj
+dotnet add $testCsproj reference backend/Api/Api.csproj
 if ($LASTEXITCODE -ne 0) { Write-Error "Fallo agregar la referencia a Api.csproj."; exit 1 }
 
 dotnet add $testCsproj package Microsoft.AspNetCore.Mvc.Testing
