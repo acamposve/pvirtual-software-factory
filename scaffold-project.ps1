@@ -50,15 +50,27 @@ Write-Host "`n== Backend (.NET) ==" -ForegroundColor Cyan
 if (Test-Path "backend") {
     Write-Host "La carpeta 'backend' ya existe, salteo la creacion del proyecto." -ForegroundColor Yellow
 } else {
-    dotnet new sln -n PVirtualSoftwareFactory -o . --force
-    if ($LASTEXITCODE -ne 0) { Write-Error "Fallo 'dotnet new sln'."; exit 1 }
-
     dotnet new webapi -n Api -o backend
     if ($LASTEXITCODE -ne 0) { Write-Error "Fallo 'dotnet new webapi'."; exit 1 }
-
-    dotnet sln PVirtualSoftwareFactory.sln add backend/Api.csproj
-    if ($LASTEXITCODE -ne 0) { Write-Error "Fallo agregar el proyecto a la solucion."; exit 1 }
 }
+
+# El SDK 10+ crea .slnx por default (antes era .sln) - buscamos el archivo real
+# en vez de asumir la extension, para que esto funcione en cualquier version.
+$slnFile = Get-ChildItem -Path $PSScriptRoot -Filter "*.sln*" -File | Select-Object -First 1
+if (-not $slnFile) {
+    dotnet new sln -n PVirtualSoftwareFactory -o .
+    if ($LASTEXITCODE -ne 0) { Write-Error "Fallo 'dotnet new sln'."; exit 1 }
+    $slnFile = Get-ChildItem -Path $PSScriptRoot -Filter "*.sln*" -File | Select-Object -First 1
+}
+
+if (-not $slnFile) {
+    Write-Error "No se encontro el archivo de solucion generado (.sln/.slnx)."
+    exit 1
+}
+
+# Idempotente: si el proyecto ya esta en la solucion, dotnet sln add no rompe nada.
+dotnet sln $slnFile.FullName add backend/Api.csproj
+if ($LASTEXITCODE -ne 0) { Write-Error "Fallo agregar el proyecto a la solucion."; exit 1 }
 
 # ---------------------------------------------------------------------------
 # 2. Frontend (React + Vite + TypeScript)
