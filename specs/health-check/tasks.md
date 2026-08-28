@@ -1,16 +1,16 @@
 # Tasks — health-check
 
-- [ ] Agregar `app.MapGet("/health", ...)` en `backend/Api/Program.cs` que
+- [x] Agregar `app.MapGet("/health", ...)` en `backend/Api/Program.cs` que
       devuelva 200 OK con `{ status: "healthy", timestampUtc: <UTC ISO8601> }`.
-- [ ] Confirmar que el endpoint no requiere autenticación (hoy el proyecto no
+- [x] Confirmar que el endpoint no requiere autenticación (hoy el proyecto no
       tiene auth configurada, así que por default ya es público — solo
       verificar que se mantenga así a futuro).
-- [ ] Crear el primer proyecto de tests del repo: `backend/Api.Tests`
+- [x] Crear el primer proyecto de tests del repo: `backend/Api.Tests`
       (xUnit + `Microsoft.AspNetCore.Mvc.Testing`), agregarlo a
       `PVirtualSoftwareFactory.slnx`.
-- [ ] Test de integración: `GET /health` devuelve 200, el body deserializa
+- [x] Test de integración: `GET /health` devuelve 200, el body deserializa
       correctamente, `status == "healthy"`.
-- [ ] Una vez que exista este test, sacar el `continue-on-error: true` del
+- [x] Una vez que exista este test, sacar el `continue-on-error: true` del
       step "Test" en `.github/workflows/ci.yml` (hasta ahora no bloqueaba
       porque no había ningún test que correr).
 - [ ] Abrir el PR desde una branch `feature/<issue#>-health-check` (ver
