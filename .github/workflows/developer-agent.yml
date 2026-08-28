@@ -1,0 +1,43 @@
+name: Developer Agent
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+jobs:
+  developer-agent:
+    if: github.event.label.name == 'ai-ready'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          label_trigger: "ai-ready"
+          base_branch: "main"
+          branch_prefix: "feature/"
+          prompt: |
+            Sos el Developer Agent descrito en docs/agents/developer-agent.md.
+            Leé ese archivo completo y seguí sus instrucciones al pie de la
+            letra para implementar el spec referenciado en el cuerpo de este
+            Issue. No implementes nada que no esté cubierto por una spec
+            aprobada en specs/.
+          claude_args: "--max-turns 20 --allowedTools Read,Edit,Write,Bash,Glob,Grep"
