@@ -80,7 +80,10 @@ $protectionJson = @'
 '@
 
 $tempFile = Join-Path $PSScriptRoot "protection.json"
-$protectionJson | Set-Content -Path $tempFile -Encoding utf8
+# Escribe SIN BOM: Set-Content -Encoding utf8 en Windows PowerShell 5.1 agrega un BOM
+# al archivo, y gh api falla con "Problems parsing JSON" al leerlo. .NET WriteAllText
+# con UTF8Encoding($false) evita el BOM en cualquier version de PowerShell.
+[System.IO.File]::WriteAllText($tempFile, $protectionJson, (New-Object System.Text.UTF8Encoding($false)))
 
 gh api "repos/$FullRepo/branches/main/protection" -X PUT --input $tempFile
 $protectionExit = $LASTEXITCODE
