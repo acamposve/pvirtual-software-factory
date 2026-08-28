@@ -14,7 +14,7 @@ jobs:
   developer-agent:
     if: github.event.label.name == 'ai-ready'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -37,7 +37,11 @@ jobs:
           prompt: |
             Sos el Developer Agent descrito en docs/agents/developer-agent.md.
             Leé ese archivo completo y seguí sus instrucciones al pie de la
-            letra para implementar el spec referenciado en el cuerpo de este
-            Issue. No implementes nada que no esté cubierto por una spec
-            aprobada en specs/.
-          claude_args: "--max-turns 20 --allowedTools Read,Edit,Write,Bash,Glob,Grep"
+            letra para implementar el spec referenciado en este Issue. La
+            carpeta de specs/ a implementar puede estar mencionada en el
+            TÍTULO del Issue, en su cuerpo, o en ambos — revisá los dos. No
+            implementes nada que no esté cubierto por una spec aprobada en
+            specs/.
+          claude_args: "--max-turns 45 --allowedTools Read,Edit,Write,Bash,Glob,Grep"
+          show_full_output: "true"
+          display_report: "true"
