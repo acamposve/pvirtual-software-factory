@@ -51,15 +51,8 @@ jobs:
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
-      # --legacy-peer-deps: typescript-eslint@8.68.0 (scaffold de create-vite)
-      # todavia declara peer typescript <6.1.0, pero el proyecto quedo con
-      # typescript@7.0.2 -> npm ci estricto corta con ERESOLVE. Esto es un
-      # workaround temporal; el arreglo real es correr 'npm install'
-      # localmente para que npm re-resuelva versiones compatibles y
-      # commitear el package-lock.json actualizado (requiere acceso real al
-      # registry de npm, que no tengo desde este entorno).
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
       - name: Lint
         run: npm run lint
