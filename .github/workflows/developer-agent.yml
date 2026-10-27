@@ -42,6 +42,24 @@ jobs:
             TÍTULO del Issue, en su cuerpo, o en ambos — revisá los dos. No
             implementes nada que no esté cubierto por una spec aprobada en
             specs/.
+            Al abrir el PR, asegurate de que el PR tenga un comentario
+            (tuyo, del agente) cuyo body empiece exactamente con el
+            marcador HTML: <!-- agent-pr --> seguido de un resumen de lo
+            implementado. Ese marcador identifica el PR como trabajo del
+            agente para el workflow de auto-fix.
           claude_args: "--max-turns 45 --allowedTools Read,Edit,Write,Bash,Glob,Grep"
           show_full_output: "true"
           display_report: "true"
+
+      # specs/agent-ci-autofix/ — observabilidad: resumen del resultado
+      # visible en el run summary de Actions.
+      - name: Run summary
+        if: always()
+        run: |
+          {
+            echo "## Developer Agent"
+            echo "- Issue disparador: #${{ github.event.issue.number }}"
+            echo "- Título: ${{ github.event.issue.title }}"
+            echo "- Spec: ver cuerpo del issue"
+            echo "- Resultado: revisar logs y PRs creados por el agente"
+          } >> "$GITHUB_STEP_SUMMARY"

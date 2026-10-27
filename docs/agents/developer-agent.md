@@ -35,6 +35,33 @@ En este orden (Constitution, Article I):
 - Cómo arreglar un test que falla.
 - Cómo actualizar una dependencia no crítica si hace falta para compilar.
 
+## Marcador de PR
+
+Al abrir un PR, el agente SIEMPRE agrega un comentario cuyo body empieza
+con el marcador HTML `<!-- agent-pr -->` seguido del resumen del cambio.
+Ese marcador es la señal que usa `agent-autofix.yml` para identificar
+PRs del agente (sin marcador, el auto-fix no actúa — fail-safe hacia
+humano).
+
+## Modo fix
+
+Además del modo normal (implementar una spec desde un issue `ai-ready`),
+el agente corre en **modo fix** cuando el workflow `agent-autofix.yml` lo
+relanza tras un fallo de CI en un PR suyo:
+
+1. Reproducir el fallo localmente (build / test / lint).
+2. Diagnosticar la causa raíz.
+3. Corregir con el cambio mínimo.
+4. Verificar localmente que todo pasa.
+5. Pushear a la **misma branch** del PR.
+
+Límites del modo fix (además de todas las reglas de arriba):
+
+- Máximo 3 intentos por PR — el workflow corta el presupuesto, no el agente.
+- Fallos de CodeQL no se arreglan en modo fix: se comenta la causa y se
+  escala a humano.
+- Si no puede arreglarlo, comenta en el PR y termina sin pushear.
+
 ## Qué NUNCA podés hacer
 
 Resumen operativo de la Constitución — leela completa, esto no la reemplaza:
