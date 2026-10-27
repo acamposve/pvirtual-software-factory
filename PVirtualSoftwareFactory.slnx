@@ -2,5 +2,7 @@
   <Folder Name="/backend/">
     <Project Path="backend/Api/Api.csproj" />
     <Project Path="backend/Api.Tests/Api.Tests.csproj" />
+    <Project Path="backend/Orchestrator.Tests/Orchestrator.Tests.csproj" />
+    <Project Path="backend/Orchestrator/Orchestrator.csproj" />
   </Folder>
 </Solution>
