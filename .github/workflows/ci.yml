@@ -27,13 +27,20 @@ jobs:
       # Api.Tests (specs/health-check/) es el primer proyecto de test real
       # del repo -> este paso ya es bloqueante (Article IV/V de la Constitution).
       - name: Test
-        run: dotnet test PVirtualSoftwareFactory.slnx --no-build --configuration Release
+        run: dotnet test PVirtualSoftwareFactory.slnx --no-build --configuration Release --collect:"XPlat Code Coverage" --results-directory ./coverage
 
-      # Informativo por ahora (Article III) - se vuelve bloqueante mas adelante
-      # si el equipo lo decide, una vez que haya paquetes reales en uso.
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./coverage/**/coverage.cobertura.xml
+          if-no-files-found: warn
+
+      # Bloqueante (Article III): verificado que hoy no hay paquetes
+      # vulnerables; si aparecen, el job falla.
       - name: Check for vulnerable packages
         run: dotnet list PVirtualSoftwareFactory.slnx package --vulnerable --include-transitive
-        continue-on-error: true
 
   frontend:
     name: Frontend (React)
