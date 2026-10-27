@@ -1,0 +1,124 @@
+name: Agent Auto-Fix
+
+# specs/agent-ci-autofix/ — cuando CI falla en un PR creado por el
+# Developer Agent, relanza el agente en modo fix (max 3 intentos).
+# Los PRs humanos son intocables (fail-safe hacia humano).
+
+on:
+  check_suite:
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  autofix:
+    if: github.event.check_suite.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Guard — identificar PR de agente y contar intentos
+        id: guard
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${{ github.event.check_suite.head_branch }}"
+
+          case "$BRANCH" in
+            feature/*|chore/*) ;;
+            *) echo "skip=branch-not-agent" >> "$GITHUB_OUTPUT"; exit 0 ;;
+          esac
+
+          PR=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+          if [ -z "$PR" ] || [ "$PR" = "null" ]; then
+            echo "skip=no-open-pr" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Fail-safe hacia humano: sin marcador de agente, no se relanza.
+          if ! gh pr view "$PR" --json comments --jq '.comments[].body' | grep -q '<!-- agent-pr -->'; then
+            echo "skip=no-agent-marker" >> "$GITHUB_OUTPUT"
+            echo "pr=$PR" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          ATTEMPTS=$(gh pr view "$PR" --json comments --jq '[.comments[].body | select(contains("<!-- autofix-attempt:"))] | length')
+          echo "pr=$PR" >> "$GITHUB_OUTPUT"
+          echo "attempts=$ATTEMPTS" >> "$GITHUB_OUTPUT"
+
+      - name: Escalada humana (presupuesto agotado)
+        if: steps.guard.outputs.skip == '' && steps.guard.outputs.attempts >= 3
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment "${{ steps.guard.outputs.pr }}" --body "🚨 **Escalada humana** — el agente agotó los 3 intentos de auto-fix y el CI sigue en rojo. No se harán más reintentos automáticos (Constitution: máx. 3 reintentos autónomos). Revisar los logs de CI y los comentarios \`autofix-attempt\`."
+
+      - name: Registrar intento y relanzar agente en modo fix
+        if: steps.guard.outputs.skip == '' && steps.guard.outputs.attempts < 3
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ATTEMPT: ${{ steps.guard.outputs.attempts + 1 }}
+        run: |
+          gh pr comment "${{ steps.guard.outputs.pr }}" --body "<!-- autofix-attempt:$ATTEMPT --> 🔁 **Auto-fix intento $ATTEMPT/3** — CI falló, relanzando el Developer Agent en modo fix. [Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+
+      - uses: actions/checkout@v7
+        if: steps.guard.outputs.skip == '' && steps.guard.outputs.attempts < 3
+        with:
+          ref: ${{ github.event.check_suite.head_sha }}
+          fetch-depth: 1
+
+      - uses: actions/setup-dotnet@v6
+        if: steps.guard.outputs.skip == '' && steps.guard.outputs.attempts < 3
+        with:
+          dotnet-version: "10.0.x"
+
+      - uses: actions/setup-node@v7
+        if: steps.guard.outputs.skip == '' && steps.guard.outputs.attempts < 3
+        with:
+          node-version: "22"
+
+      - name: Developer Agent (modo fix)
+        if: steps.guard.outputs.skip == '' && steps.guard.outputs.attempts < 3
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          base_branch: "main"
+          branch_prefix: "feature/"
+          prompt: |
+            Sos el Developer Agent descrito en docs/agents/developer-agent.md,
+            ejecutando en MODO FIX (ver sección "Modo fix" de ese archivo).
+
+            Contexto: el CI falló en el PR de la branch
+            ${{ github.event.check_suite.head_branch }} (intento
+            ${{ steps.guard.outputs.attempts }} de 3).
+
+            Tu trabajo:
+            1. Corré el build y los tests localmente para reproducir el fallo
+               (dotnet build / dotnet test / npm run lint / npm run build).
+            2. Diagnosticá la causa raíz. Si el fallo es de CodeQL y no de
+               build/test/lint, NO lo arregles: comentá en el PR por qué y
+               terminá (escalada humana).
+            3. Corregí el código con el cambio mínimo necesario.
+            4. Verificá que build + tests + lint pasen localmente.
+            5. Commiteá y pusheá a la MISMA branch. NO toques main, NO
+               mergees, NO debilites tests, NO edites workflows.
+
+            Si no podés arreglarlo, dejá un comentario en el PR explicando
+            qué encontraste y terminá sin pushear.
+          claude_args: "--max-turns 45 --allowedTools Read,Edit,Write,Bash,Glob,Grep"
+          show_full_output: "true"
+
+      - name: Run summary
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "## Agent Auto-Fix"
+            echo "- Branch: \`${{ github.event.check_suite.head_branch }}\`"
+            echo "- Resultado del check suite: \`${{ github.event.check_suite.conclusion }}\`"
+            echo "- Intentos previos: \`${{ steps.guard.outputs.attempts }}\`"
+            echo "- Decisión: \`${{ steps.guard.outputs.skip || 'relanzar agente' }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
